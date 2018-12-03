@@ -32,7 +32,7 @@ public class TFIDF_anc_apc {
         numDocs = n;
         pageList = pl;
 
-        String fields[] = {"id","question"};
+        String fields[] = {"question","answer"};
 
         parser = new MultiFieldQueryParser(fields,new StandardAnalyzer());
 
@@ -65,7 +65,7 @@ public class TFIDF_anc_apc {
 
     //map query to map of document with tfidf score
         queryResult = new HashMap<>();
-
+        Map<String,String> QAmap = new HashMap<>();
         //for every page
         for (String page : pageList){
             Map<Integer, Float> scores = new HashMap<>();
@@ -85,7 +85,7 @@ public class TFIDF_anc_apc {
             float maxQueryTF = 0;
 
             for (String term : page.split(" ")){
-                TermQuery postq = new TermQuery(new Term("id", term));
+                TermQuery postq = new TermQuery(new Term("answer", term));
                 TermQuery titleq = new TermQuery(new Term("question", term));
                 terms.add(postq);
                 terms.add(titleq);
@@ -140,9 +140,9 @@ public class TFIDF_anc_apc {
                     // the
                     // document
                     int docId = Integer.parseInt(doc.get("id"));
-                    String question = doc.get("question");
-                    System.out.println(question);
-                    System.out.println(doc.get("answer"));
+//                    String question = doc.get("question");
+//                    System.out.println(question);
+//                    System.out.println(doc.get("answer"));
                     float max = Float.parseFloat(doc.get("maxtf"));
 
                     double score = (0.5f + (tpd.scoreDocs[i].score / max)) * queryweights.get(query); // Calculate
@@ -152,11 +152,12 @@ public class TFIDF_anc_apc {
 
                     DocumentResult dResults = docMap.get(docId);
                     if (dResults == null) {
-                        dResults = new DocumentResult(docId, (float) score,question);
+                        dResults = new DocumentResult(docId, (float) score);
                     }
                     float prevScore = dResults.getScore();
                     // Store score for later use
                     scores.put(Integer.parseInt(doc.get("id")), (float) (prevScore + score));
+                    QAmap.put(doc.get("question"),doc.get("answer"));
                 }
             }
 
@@ -168,22 +169,42 @@ public class TFIDF_anc_apc {
             }
             cosineLength = (float) (Math.sqrt(cosineLength));
             // Normalization of scores
-            for (Map.Entry<Integer, Float> entry : scores.entrySet()) { // For
-                // every
-                // document
-                // and
-                // its
-                // corresponding
-                // score...
-                int docId = entry.getKey();
-                Float score = entry.getValue();
 
-                // Normalize the score
+            Iterator<Map.Entry<Integer, Float>> iter_scores = scores.entrySet().iterator();
+            Iterator<Map.Entry<String, String>> iter_qa = QAmap.entrySet().iterator();
+
+
+
+            while(iter_scores.hasNext() && iter_qa.hasNext()){
+                Map.Entry<Integer, Float> e1 = iter_scores.next();
+                Map.Entry<String, String> e2 = iter_qa.next();
+
+                int docId = e1.getKey();
+                Float score = e1.getValue();
+
+                String question = e2.getKey();
+                String answer = e2.getValue();
                 scores.put(docId, score / scores.size());
-
-                DocumentResult docResult = new DocumentResult(docId, score);
+                DocumentResult docResult = new DocumentResult(docId, score,question,answer);
                 docQueue.add(docResult);
             }
+
+//            for (Map.Entry<Integer, Float> entry : scores.entrySet()) { // For
+//                // every
+//                // document
+//                // and
+//                // its
+//                // corresponding
+//                // score...
+//                int docId = entry.getKey();
+//                Float score = entry.getValue();
+//
+//                // Normalize the score
+//                scores.put(docId, score / scores.size());
+//
+//                DocumentResult docResult = new DocumentResult(docId, score);
+//                docQueue.add(docResult);
+//            }
 
             int rankCount = 1;
             DocumentResult current;
@@ -206,17 +227,17 @@ public class TFIDF_anc_apc {
 
 
     public void write() throws IOException {
-        System.out.println("TFIDF_anc_apc writing results to: " + "/Users/xinliu/Documents/UNH/18Fall/cs853/cs853FinalProject/CS853Project" + "/"
+        System.out.println("TFIDF_anc_apc writing results to: " + "/Users/xinliu/Desktop/IR_project2/Project" + "/"
                 +  "anc-apc.run");
         FileWriter runfileWriter = new FileWriter(
-                new File("/Users/xinliu/Documents/UNH/18Fall/cs853/cs853FinalProject/CS853Project"+ "/" + "anc-apc.run"));
+                new File("/Users/xinliu/Desktop/IR_project2/Project"+ "/" + "anc-apc.run"));
         for (Map.Entry<String, List<DocumentResult>> results : queryResult.entrySet()) {
             String query = results.getKey();
             List<DocumentResult> list = results.getValue();
             for (int i = 0; i < list.size(); i++) {
                 DocumentResult dr = list.get(i);
                 runfileWriter.write(query.replace(" ", "-") + " Q0 " + dr.getId() + " " + dr.getRank() + " "
-                        + dr.getScore() + " team1-TFIDF_anc_apc\n");
+                        + dr.getScore() +"  "+  dr.getQuestion() + "  "+ dr.getAnswer()+  " group7-TFIDF_anc_apc\n");
             }
         }
         runfileWriter.close();

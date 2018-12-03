@@ -166,19 +166,19 @@ public class main {
         }
         tfidf_anc_apc.write();
 
-        TFIDF_lnc_ltn tfidf_lnc_ltn = new TFIDF_lnc_ltn(queryList, 30);
-        result_lnc_ltn = tfidf_lnc_ltn.getResult();
-
-        TFIDF_bnn_bnn tfidf_bnn_bnn = new TFIDF_bnn_bnn(queryList, 30);
-        result_bnn_bnn = tfidf_bnn_bnn.getResults();
-
-
-        for (String page : queryList){
-            System.out.println("Page=" + page);
-            List<DocumentResult> bnn_list = result_bnn_bnn.get(page);
-            List<DocumentResult> lnc_list = result_lnc_ltn.get(page);
-            List<DocumentResult> anc_list = result_anc_apc.get(page);
-        }
+//        TFIDF_lnc_ltn tfidf_lnc_ltn = new TFIDF_lnc_ltn(queryList, 30);
+//        result_lnc_ltn = tfidf_lnc_ltn.getResult();
+//
+//        TFIDF_bnn_bnn tfidf_bnn_bnn = new TFIDF_bnn_bnn(queryList, 30);
+//        result_bnn_bnn = tfidf_bnn_bnn.getResults();
+//
+//
+//        for (String page : queryList){
+//            System.out.println("Page=" + page);
+//            List<DocumentResult> bnn_list = result_bnn_bnn.get(page);
+//            List<DocumentResult> lnc_list = result_lnc_ltn.get(page);
+//            List<DocumentResult> anc_list = result_anc_apc.get(page);
+//        }
     }
 
 }
