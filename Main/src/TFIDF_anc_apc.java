@@ -67,9 +67,10 @@ public class TFIDF_anc_apc {
         queryResult = new HashMap<>();
         Map<String,String> QAmap = new HashMap<>();
         //for every page
+
         for (String page : pageList){
             Map<Integer, Float> scores = new HashMap<>();
-
+            Map<Integer,Pair> map = new HashMap<>();
             Map<Integer,Map<Float,String>> temp = new HashMap<>();
 
             HashMap<Integer, DocumentResult> docMap = new HashMap<>();
@@ -152,42 +153,63 @@ public class TFIDF_anc_apc {
 
                     DocumentResult dResults = docMap.get(docId);
                     if (dResults == null) {
-                        dResults = new DocumentResult(docId, (float) score);
+                        dResults = new DocumentResult(docId, (float) score,doc.get("question"),doc.get("answer"));
                     }
                     float prevScore = dResults.getScore();
                     // Store score for later use
                     scores.put(Integer.parseInt(doc.get("id")), (float) (prevScore + score));
+
+
+
                     QAmap.put(doc.get("question"),doc.get("answer"));
+
+                    map.put(Integer.parseInt(doc.get("id")),new Pair(doc.get("question"),doc.get("answer"),(float) (prevScore + score)));
                 }
             }
 
             float cosineLength = 0.0f;
-            for (Map.Entry<Integer, Float> entry : scores.entrySet()) {
-                Float score = entry.getValue();
+//            for (Map.Entry<Integer, Float> entry : scores.entrySet()) {
+//                Float score = entry.getValue();
+//                cosineLength = (float) (cosineLength + Math.pow(score, 2));
+//            }
 
+            for (Map.Entry<Integer,Pair> entry : map.entrySet()){
+                float score = entry.getValue().getScore();
                 cosineLength = (float) (cosineLength + Math.pow(score, 2));
             }
+
             cosineLength = (float) (Math.sqrt(cosineLength));
             // Normalization of scores
 
-            Iterator<Map.Entry<Integer, Float>> iter_scores = scores.entrySet().iterator();
-            Iterator<Map.Entry<String, String>> iter_qa = QAmap.entrySet().iterator();
+//            Iterator<Map.Entry<Integer, Float>> iter_scores = scores.entrySet().iterator();
+//            Iterator<Map.Entry<String, String>> iter_qa = QAmap.entrySet().iterator();
 
-
-
-            while(iter_scores.hasNext() && iter_qa.hasNext()){
-                Map.Entry<Integer, Float> e1 = iter_scores.next();
-                Map.Entry<String, String> e2 = iter_qa.next();
-
+            Iterator<Map.Entry<Integer, Pair>> iter_map = map.entrySet().iterator();
+            while (iter_map.hasNext()){
+                Map.Entry<Integer,Pair> e1 = iter_map.next();
                 int docId = e1.getKey();
-                Float score = e1.getValue();
+                Pair p = e1.getValue();
 
-                String question = e2.getKey();
-                String answer = e2.getValue();
+                String question = p.getQuestion();
+                String answer = p.getAnswer();
+                float score = p.getScore();
                 scores.put(docId, score / scores.size());
                 DocumentResult docResult = new DocumentResult(docId, score,question,answer);
                 docQueue.add(docResult);
             }
+//            while(iter_scores.hasNext() && iter_qa.hasNext()){
+//                Map.Entry<Integer, Float> e1 = iter_scores.next();
+//                Map.Entry<String, String> e2 = iter_qa.next();
+//
+//                int docId = e1.getKey();
+//                Float score = e1.getValue();
+//
+//                String question = e2.getKey();
+//                String answer = e2.getValue();
+//                scores.put(docId, score / scores.size());
+//                DocumentResult docResult = new DocumentResult(docId, score,question,answer);
+//                docQueue.add(docResult);
+//            }
 
 //            for (Map.Entry<Integer, Float> entry : scores.entrySet()) { // For
 //                // every

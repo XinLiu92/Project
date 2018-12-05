@@ -14,6 +14,7 @@ import org.apache.lucene.search.similarities.SimilarityBase;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -39,11 +40,11 @@ public class TFIDF_lnc_ltn {
         pageList = pl; // Each page title will be used as a query
 
         // Parse the parabody field using StandardAnalyzer
-        String fields[] = {"id","question"};
+        String fields[] = {"question","answer"};
         parser = new MultiFieldQueryParser(fields, new StandardAnalyzer());
 
         // Create an index searcher
-        String INDEX_DIRECTORY = "";
+        String INDEX_DIRECTORY = "/Users/xinliu/Documents/UNH/18Fall/cs853/index";
         searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open((new File(INDEX_DIRECTORY).toPath()))));
 
         // Set our own similarity class which computes tf[t,d]
@@ -64,13 +65,14 @@ public class TFIDF_lnc_ltn {
 
         queryResults = new HashMap<>(); // Maps query to map of Documents with
         // TF-IDF score
-
+        Map<String,String> QAmap = new HashMap<>();
         for (String page : pageList) { // For every page in .cbor.outline
             // We need...
 
             Map<Integer, Float> scores = new HashMap<>(); // Mapping of each
             // Document to
             // its score
+            Map<Integer,Pair> map = new HashMap<>();
             HashMap<Integer, DocumentResult> docMap = new HashMap<>();
             HashMap<TermQuery, Float> queryweights = new HashMap<>(); // Mapping
             // of
@@ -89,7 +91,7 @@ public class TFIDF_lnc_ltn {
                 // name...
                 // Take word as query term
                 // for parabody
-                TermQuery postq = new TermQuery(new Term("id", term));
+                TermQuery postq = new TermQuery(new Term("answer", term));
                 TermQuery titleq = new TermQuery(new Term("question", term));
                 terms.add(postq);
                 terms.add(titleq);
@@ -134,9 +136,9 @@ public class TFIDF_lnc_ltn {
                     // TF-IDF
                     // for
                     // document
-                    String question = doc.get("question");
-                    System.out.println(question);
-                    System.out.println(doc.get("answer"));
+//                    String question = doc.get("question");
+//                    System.out.println(question);
+//                    System.out.println(doc.get("answer"));
 
 
                     DocumentResult dResults = docMap.get(docId);
@@ -146,33 +148,57 @@ public class TFIDF_lnc_ltn {
                     float prevScore = dResults.getScore();
                     // Store score for later use
                     scores.put(Integer.parseInt(doc.get("id")), (float) (prevScore + score));
+                    map.put(Integer.parseInt(doc.get("id")),new Pair(doc.get("question"),doc.get("answer"),(float) (prevScore + score)));
+
                 }
             }
 
             // Get cosine Length
             float cosineLength = 0.0f;
-            for (Map.Entry<Integer, Float> entry : scores.entrySet()) {
-                Float score = entry.getValue();
+//            for (Map.Entry<Integer, Float> entry : scores.entrySet()) {
+//                Float score = entry.getValue();
+//
+//                cosineLength = (float) (cosineLength + Math.pow(score, 2));
+//            }
 
+            for (Map.Entry<Integer,Pair> entry : map.entrySet()){
+                float score = entry.getValue().getScore();
                 cosineLength = (float) (cosineLength + Math.pow(score, 2));
             }
+
             cosineLength = (float) (Math.sqrt(cosineLength));
 
             // Normalization of scores
-            for (Map.Entry<Integer, Float> entry : scores.entrySet()) { // For
-                // every
-                // document
-                // and
-                // its
-                // corresponding
-                // score...
-                int docId = entry.getKey();
-                Float score = entry.getValue();
+//            for (Map.Entry<Integer, Float> entry : scores.entrySet()) { // For
+//                // every
+//                // document
+//                // and
+//                // its
+//                // corresponding
+//                // score...
+//                int docId = entry.getKey();
+//                Float score = entry.getValue();
+//
+//                // Normalize the score
+//                scores.put(docId, score / scores.size());
+//
+//                DocumentResult docResult = new DocumentResult(docId, score);
+//                docQueue.add(docResult);
+//            }
 
-                // Normalize the score
+
+
+            Iterator<Map.Entry<Integer, Pair>> iter_map = map.entrySet().iterator();
+            while (iter_map.hasNext()){
+                Map.Entry<Integer,Pair> e1 = iter_map.next();
+                int docId = e1.getKey();
+                Pair p = e1.getValue();
+
+                String question = p.getQuestion();
+                String answer = p.getAnswer();
+                float score = p.getScore();
                 scores.put(docId, score / scores.size());
-
-                DocumentResult docResult = new DocumentResult(docId, score);
+                DocumentResult docResult = new DocumentResult(docId, score,question,answer);
                 docQueue.add(docResult);
             }
 
@@ -194,5 +220,23 @@ public class TFIDF_lnc_ltn {
     }
     public List<DocumentResult> getResultsForQuery(String query) {
         return this.queryResults.get(query);
+    }
+
+    public void write() throws IOException {
+        System.out.println("TFIDF_lnc_ltn writing results to: " + "/Users/xinliu/Desktop/IR_project2/Project" + "/"
+                +  "lnc-ltn.run");
+        FileWriter runfileWriter = new FileWriter(
+                new File("/Users/xinliu/Desktop/IR_project2/Project"+ "/" + "lnc-ltn.run"));
+        for (Map.Entry<String, List<DocumentResult>> results : queryResults.entrySet()) {
+            String query = results.getKey();
+            List<DocumentResult> list = results.getValue();
+            for (int i = 0; i < list.size(); i++) {
+                DocumentResult dr = list.get(i);
+                runfileWriter.write(query.replace(" ", "-") + " Q0 " + dr.getId() + " " + dr.getRank() + " "
+                        + dr.getScore() +"  "+  dr.getQuestion() + "  "+ dr.getAnswer()+  " group7-TFIDF_lnc_ltn\n");
+            }
+        }
+        runfileWriter.close();
+
     }
 }

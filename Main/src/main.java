@@ -151,26 +151,15 @@ public class main {
 
         TFIDF_anc_apc tfidf_anc_apc = new TFIDF_anc_apc(queryList, 30);
         result_anc_apc = tfidf_anc_apc.getResults();
-
-        int count = 0;
-
-        for (String query : result_anc_apc.keySet()){
-//            System.out.println(query);
-//            System.out.println(result_anc_apc.get(query).size());
-//            for (DocumentResult Doc : result_anc_apc.get(query)){
-//                System.out.println(Doc.getId());
-//            }
-
-            if (count >10) break;
-            count++;
-        }
         tfidf_anc_apc.write();
 
-//        TFIDF_lnc_ltn tfidf_lnc_ltn = new TFIDF_lnc_ltn(queryList, 30);
-//        result_lnc_ltn = tfidf_lnc_ltn.getResult();
+        TFIDF_lnc_ltn tfidf_lnc_ltn = new TFIDF_lnc_ltn(queryList, 30);
+        result_lnc_ltn = tfidf_lnc_ltn.getResult();
+        tfidf_lnc_ltn.write();
 //
-//        TFIDF_bnn_bnn tfidf_bnn_bnn = new TFIDF_bnn_bnn(queryList, 30);
-//        result_bnn_bnn = tfidf_bnn_bnn.getResults();
+        TFIDF_bnn_bnn tfidf_bnn_bnn = new TFIDF_bnn_bnn(queryList, 30);
+        result_bnn_bnn = tfidf_bnn_bnn.getResults();
+        tfidf_bnn_bnn.write();
 //
 //
 //        for (String page : queryList){
