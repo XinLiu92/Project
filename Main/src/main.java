@@ -18,7 +18,7 @@ public class main {
     public static String GROUP = "Group 7";
     public static String INDEX_DIR = "./index";
 
-    public static String file=  "./WikiQA.tsv";
+    public static String file= "";
 
     public static List<Ans> ansList = new ArrayList<>();
     public static List<Que> queList = new ArrayList<>();
@@ -86,12 +86,15 @@ public class main {
 
     public static void main(String[] args) throws ParseException, org.apache.lucene.queryparser.classic.ParseException, IOException {
 
+        file = args[0];
+
         Data data = null;
         try {
             data = index("");
         } catch (IOException e) {
             e.printStackTrace();
         }
+
 
 
        //use doc title to be testing query
