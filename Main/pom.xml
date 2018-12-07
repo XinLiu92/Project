@@ -7,7 +7,7 @@
     <groupId>Group7</groupId>
     <artifactId>FinalProject</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>UNH cs853 Group7  - Programming Assignment 1</name>
+    <name>UNH cs853 Group7  - Finalproject 1</name>
     <repositories>
         <repository>
             <id>jitpack.io</id>
@@ -95,7 +95,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>main.Main</mainClass>
+                    <mainClass>main</mainClass>
                     <arguments>
                         <argument>run</argument>
                     </arguments>
