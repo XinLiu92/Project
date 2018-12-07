@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import PairPac.*;
 
 public class TFIDF_bnn_bnn {
     private IndexSearcher searcher; // lucene IndexSearcher
@@ -39,7 +40,7 @@ public class TFIDF_bnn_bnn {
 
 
 
-        String INDEX_DIRECTORY = "/Users/xinliu/Documents/UNH/18Fall/cs853/index";
+        String INDEX_DIRECTORY =  "./index";
 
         searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open((new File(INDEX_DIRECTORY).toPath()))));
 
@@ -180,17 +181,17 @@ public class TFIDF_bnn_bnn {
 
 
     public void write() throws IOException {
-        System.out.println("TFIDF_bnn_bnn writing results to: " + "/Users/xinliu/Desktop/IR_project2/Project" + "/"
+        System.out.println("TFIDF_bnn_bnn writing results to: " + "/"
                 +  "bnn-bnn.run");
         FileWriter runfileWriter = new FileWriter(
-                new File("/Users/xinliu/Desktop/IR_project2/Project"+ "/" + "bnn-bnn.run"));
+                new File("./" + "bnn-bnn.run"));
         for (Map.Entry<String, List<DocumentResult>> results : queryResults.entrySet()) {
             String query = results.getKey();
             List<DocumentResult> list = results.getValue();
             for (int i = 0; i < list.size(); i++) {
                 DocumentResult dr = list.get(i);
                 runfileWriter.write(query.replace(" ", "-") + " Q0 " + dr.getId() + " " + dr.getRank() + " "
-                        + dr.getScore() +"  "+  dr.getQuestion() + "  "+ dr.getAnswer()+  " group7-TFIDF_bnn_bnn\n");
+                        + dr.getScore() +  " group7-TFIDF_bnn_bnn\n");
             }
         }
         runfileWriter.close();

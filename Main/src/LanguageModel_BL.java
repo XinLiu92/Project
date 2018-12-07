@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import PairPac.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -40,21 +41,21 @@ import org.apache.lucene.store.FSDirectory;
 //Bigram Language Model with Laplace smoothing.
 public class LanguageModel_BL {
 
-    final private String INDEX_DIRECTORY = "C:\\CS853\\853Project\\Index";
+    final private String INDEX_DIRECTORY =  "./index";
     private QueryParser parser = null;
     private IndexSearcher searcher = null;
     private int numdocs = 100;
-    private ArrayList<String> queryPageList;
-    private HashMap<String, ArrayList<DocumentResult>> queryResults;
+    private List<String> queryPageList;
+    private HashMap<String, List<DocumentResult>> queryResults;
 
     // private String TEAM_METHOD = "Team1-Bigram";
 
-    public LanguageModel_BL(ArrayList<String> pl, int n) throws ParseException, IOException {
+    public LanguageModel_BL(List<String> pl, int n) throws ParseException, IOException {
 
         numdocs = n;
         queryPageList = pl;
 
-        String fields[] = { "posttitle", "postbody" };
+        String fields[] = {"question","answer"};
         parser = new MultiFieldQueryParser(fields, new StandardAnalyzer());
 
         searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open((new File(INDEX_DIRECTORY).toPath()))));
@@ -74,13 +75,13 @@ public class LanguageModel_BL {
         searcher.setSimilarity(bl_sim);
     }
 
-    public HashMap<String, ArrayList<DocumentResult>> getReulst() {
+    public HashMap<String, List<DocumentResult>> getReulst() {
         queryResults = new HashMap<>();
 
         for (String pageQuery : queryPageList) {
             ArrayList<DocumentResult> rankedDocs = new ArrayList<DocumentResult>();
             HashMap<Integer, Float> result_map = getRankedDocuments(pageQuery);
-
+            Map<Integer,Pair> map = new HashMap<>();
             int rankCount = 1;
             for (Map.Entry<Integer, Float> entry : result_map.entrySet()) {
                 int docId = entry.getKey();
@@ -99,12 +100,12 @@ public class LanguageModel_BL {
 
     }
 
-    public void generateResults(String runfile) throws IOException, ParseException {
+    public void generateResults() throws IOException, ParseException {
 
         queryResults = new HashMap<>();
 
         for (String pageQuery : queryPageList) {
-            ArrayList<DocumentResult> rankedDocs = new ArrayList<DocumentResult>();
+            List<DocumentResult> rankedDocs = new ArrayList<DocumentResult>();
             HashMap<Integer, Float> result_map = getRankedDocuments(pageQuery);
 
             int rankCount = 1;
@@ -122,15 +123,16 @@ public class LanguageModel_BL {
             queryResults.put(pageQuery, rankedDocs);
         }
 
-        System.out.println("Writing results to: " + runfile);
-        FileWriter runfileWriter = new FileWriter(new File(runfile));
-        for (Map.Entry<String, ArrayList<DocumentResult>> results : queryResults.entrySet()) {
+        //System.out.println("Writing results to: " + runfile);
+        FileWriter runfileWriter = new FileWriter(
+                new File( "./" + "lmb.run"));
+        for (Map.Entry<String, List<DocumentResult>> results : queryResults.entrySet()) {
             String query = results.getKey();
-            ArrayList<DocumentResult> list = results.getValue();
+            List<DocumentResult> list = results.getValue();
             for (int i = 0; i < list.size(); i++) {
                 DocumentResult dr = list.get(i);
                 runfileWriter.write(query.replace(" ", "-") + " Q0 " + dr.getId() + " " + dr.getRank() + " "
-                        + dr.getScore() + " team1-LM_BL\n");
+                        + dr.getScore() + " Group7-LM_BL\n");
             }
         }
         runfileWriter.close();
@@ -143,8 +145,8 @@ public class LanguageModel_BL {
         try {
 
             IndexReader ir = searcher.getIndexReader();
-            TermQuery postq = new TermQuery(new Term("postbody", queryStr));
-            TermQuery titleq = new TermQuery(new Term("posttitle", queryStr));
+            TermQuery postq = new TermQuery(new Term("answer", queryStr));
+            TermQuery titleq = new TermQuery(new Term("question", queryStr));
 
             // QueryScore of post body (postbody)
             TopDocs topDocs_body = searcher.search(postq, numdocs);
@@ -153,13 +155,13 @@ public class LanguageModel_BL {
             for (int i = 0; i < hits_body.length; i++) {
                 Document doc = searcher.doc(hits_body[i].doc);
 
-                int docId = Integer.parseInt(doc.get("postid"));
-                String docBody = doc.get("postbody");
+                int docId = Integer.parseInt(doc.get("id"));
+                String docBody = doc.get("answer");
                 ArrayList<Float> p_wt = new ArrayList<Float>();
 
-                ArrayList<String> bigram_list = analyzeByBigram(docBody);
-                ArrayList<String> unigram_list = analyzeByUnigram(docBody);
-                ArrayList<String> query_list = analyzeByUnigram(queryStr);
+                ArrayList<String> bigram_list = (ArrayList<String>) analyzeByBigram(docBody);
+                ArrayList<String> unigram_list = (ArrayList<String>) analyzeByUnigram(docBody);
+                ArrayList<String> query_list = (ArrayList<String>) analyzeByUnigram(queryStr);
 
                 // Size of vocabulary
                 int size_of_voc = getSizeOfVocabulary(unigram_list);
@@ -199,13 +201,13 @@ public class LanguageModel_BL {
             for (int i = 0; i < hits_title.length; i++) {
                 Document doc = searcher.doc(hits_title[i].doc);
 
-                int docId = Integer.parseInt(doc.get("postid"));
-                String docBody = doc.get("posttitle");
+                int docId = Integer.parseInt(doc.get("id"));
+                String docBody = doc.get("question");
                 ArrayList<Float> p_wt = new ArrayList<Float>();
 
-                ArrayList<String> bigram_list = analyzeByBigram(docBody);
-                ArrayList<String> unigram_list = analyzeByUnigram(docBody);
-                ArrayList<String> query_list = analyzeByUnigram(queryStr);
+                ArrayList<String> bigram_list = (ArrayList<String>) analyzeByBigram(docBody);
+                ArrayList<String> unigram_list = (ArrayList<String>) analyzeByUnigram(docBody);
+                ArrayList<String> query_list = (ArrayList<String>) analyzeByUnigram(queryStr);
 
                 // Size of vocabulary
                 int size_of_voc = getSizeOfVocabulary(unigram_list);
@@ -252,7 +254,7 @@ public class LanguageModel_BL {
     }
 
     // Get score from list of p.
-    private static float getScoreByPListWithLog(ArrayList<Float> p_list) {
+    private static float getScoreByPListWithLog(List<Float> p_list) {
         float score = 0;
         for (Float wt : p_list) {
             score = (float) ((float) score + Math.log(wt));
@@ -262,13 +264,13 @@ public class LanguageModel_BL {
     }
 
     // Get exact count.
-    private static int countExactStrFreqInList(String term, ArrayList<String> list) {
+    private static int countExactStrFreqInList(String term, List<String> list) {
         int occurrences = Collections.frequency(list, term);
         return occurrences;
     }
 
     // Get count with wildcard.
-    private static int countStrFreqInList(String term, ArrayList<String> list) {
+    private static int countStrFreqInList(String term, List<String> list) {
         int occurrences = 0;
         for (int i = 0; i < list.size(); i++) {
             String str = list.get(i);
@@ -285,8 +287,8 @@ public class LanguageModel_BL {
         return p;
     }
 
-    private static int getSizeOfVocabulary(ArrayList<String> unigramList) {
-        ArrayList<String> list = new ArrayList<String>();
+    private static int getSizeOfVocabulary(List<String> unigramList) {
+        List<String> list = new ArrayList<String>();
         Set<String> hs = new HashSet<>();
 
         hs.addAll(unigramList);
@@ -294,10 +296,10 @@ public class LanguageModel_BL {
         return list.size();
     }
 
-    private static ArrayList<String> analyzeByBigram(String inputStr) throws IOException {
+    private static List<String> analyzeByBigram(String inputStr) throws IOException {
         Reader reader = new StringReader(inputStr);
         // System.out.println("Input text: " + inputStr);
-        ArrayList<String> strList = new ArrayList<String>();
+        List<String> strList = new ArrayList<String>();
         Analyzer analyzer = new BigramAnalyzer();
         TokenStream tokenizer = analyzer.tokenStream("content", inputStr);
 
@@ -313,10 +315,10 @@ public class LanguageModel_BL {
         return strList;
     }
 
-    private static ArrayList<String> analyzeByUnigram(String inputStr) throws IOException {
+    private static List<String> analyzeByUnigram(String inputStr) throws IOException {
         Reader reader = new StringReader(inputStr);
         // System.out.println("Input text: " + inputStr);
-        ArrayList<String> strList = new ArrayList<String>();
+        List<String> strList = new ArrayList<String>();
         Analyzer analyzer = new UnigramAnalyzer();
         TokenStream tokenizer = analyzer.tokenStream("content", inputStr);
 
@@ -354,7 +356,7 @@ public class LanguageModel_BL {
         return sortedMap;
     }
 
-    public static void writeStrListToRunFile(ArrayList<String> strList, String path) {
+    public static void writeStrListToRunFile(List<String> strList, String path) {
         // write to run file.
 
         BufferedWriter bWriter = null;
@@ -388,7 +390,7 @@ public class LanguageModel_BL {
 
     }
 
-    public ArrayList<DocumentResult> getResultsForQuery(String query) {
+    public List<DocumentResult> getResultsForQuery(String query) {
         return this.queryResults.get(query);
     }
 

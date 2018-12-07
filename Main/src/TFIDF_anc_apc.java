@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-
+import PairPac.*;
 public class TFIDF_anc_apc {
 
 
@@ -39,7 +39,7 @@ public class TFIDF_anc_apc {
 
         //create index searcher
 
-        String INDEX_DIRECTORY = "/Users/xinliu/Documents/UNH/18Fall/cs853/index";
+        String INDEX_DIRECTORY =  "./index";
 
         searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(INDEX_DIRECTORY).toPath())));
 
@@ -249,17 +249,17 @@ public class TFIDF_anc_apc {
 
 
     public void write() throws IOException {
-        System.out.println("TFIDF_anc_apc writing results to: " + "/Users/xinliu/Desktop/IR_project2/Project" + "/"
+        System.out.println("TFIDF_anc_apc writing results to: " + "/"
                 +  "anc-apc.run");
         FileWriter runfileWriter = new FileWriter(
-                new File("/Users/xinliu/Desktop/IR_project2/Project"+ "/" + "anc-apc.run"));
+                new File("./" + "anc-apc.run"));
         for (Map.Entry<String, List<DocumentResult>> results : queryResult.entrySet()) {
             String query = results.getKey();
             List<DocumentResult> list = results.getValue();
             for (int i = 0; i < list.size(); i++) {
                 DocumentResult dr = list.get(i);
-                runfileWriter.write(query.replace(" ", "-") + " Q0 " + dr.getId() + " " + dr.getRank() + " "
-                        + dr.getScore() +"  "+  dr.getQuestion() + "  "+ dr.getAnswer()+  " group7-TFIDF_anc_apc\n");
+                runfileWriter.write(query.replace(" ", "-") + " Q0 "+ dr.getId() + " " + dr.getRank() + " "
+                        + dr.getScore() +  " group7-TFIDF_anc_apc\n");
             }
         }
         runfileWriter.close();

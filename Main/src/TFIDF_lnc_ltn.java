@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-
+import PairPac.*;
 public class TFIDF_lnc_ltn {
 
 
@@ -44,7 +44,7 @@ public class TFIDF_lnc_ltn {
         parser = new MultiFieldQueryParser(fields, new StandardAnalyzer());
 
         // Create an index searcher
-        String INDEX_DIRECTORY = "/Users/xinliu/Documents/UNH/18Fall/cs853/index";
+        String INDEX_DIRECTORY =  "./index";
         searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open((new File(INDEX_DIRECTORY).toPath()))));
 
         // Set our own similarity class which computes tf[t,d]
@@ -223,17 +223,17 @@ public class TFIDF_lnc_ltn {
     }
 
     public void write() throws IOException {
-        System.out.println("TFIDF_lnc_ltn writing results to: " + "/Users/xinliu/Desktop/IR_project2/Project" + "/"
+        System.out.println("TFIDF_lnc_ltn writing results to: " + "/"
                 +  "lnc-ltn.run");
         FileWriter runfileWriter = new FileWriter(
-                new File("/Users/xinliu/Desktop/IR_project2/Project"+ "/" + "lnc-ltn.run"));
+                new File("./" + "lnc-ltn.run"));
         for (Map.Entry<String, List<DocumentResult>> results : queryResults.entrySet()) {
             String query = results.getKey();
             List<DocumentResult> list = results.getValue();
             for (int i = 0; i < list.size(); i++) {
                 DocumentResult dr = list.get(i);
-                runfileWriter.write(query.replace(" ", "-") + " Q0 " + dr.getId() + " " + dr.getRank() + " "
-                        + dr.getScore() +"  "+  dr.getQuestion() + "  "+ dr.getAnswer()+  " group7-TFIDF_lnc_ltn\n");
+                runfileWriter.write(query.replace(" ", "-") + " Q0 "+ dr.getId() + " " + dr.getRank() + " "
+                        + dr.getScore() +  " group7-TFIDF_lnc_ltn\n");
             }
         }
         runfileWriter.close();

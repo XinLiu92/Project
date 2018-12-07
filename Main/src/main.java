@@ -2,50 +2,38 @@ import DataEntry.Ans;
 import DataEntry.Data;
 import DataEntry.DocTitle;
 import DataEntry.Que;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 
-import javax.print.Doc;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.*;
-
+import PairPac.*;
 public class main {
     public static String GROUP = "Group 7";
-    public static String INDEX_DIR = "/Users/xinliu/Documents/UNH/18Fall/cs853/index";
+    public static String INDEX_DIR = "./index";
 
-    public static String OUTPUT_DIR = "";
+    public static String file=  "./WikiQA.tsv";
 
-    public static String WIKIQA_DIR = "";
-
-
-    public static String TFIDF_BNN_BNN = "";
-    public static String TFIDF_ANC_APC = "";
-    public static String TFIDF_LNC_LTN = "";
-    public static String LM_BL = "";
-    public static String file=  "/Users/xinliu/Documents/UNH/18Fall/cs853/project/WikiQACorpus/WikiQA.tsv";
-    //public static String file=  "/Users/xinliu/Documents/UNH/18Fall/cs819/assignment4/People.csv";
     public static List<Ans> ansList = new ArrayList<>();
     public static List<Que> queList = new ArrayList<>();
     public static List<DocTitle> docTitleList = new ArrayList<>();
 
-
+    public static Map<String,List<PairPac.Pair>> titleWithQA;
 
     private static Data index(String dir) throws IOException {
         Data data = new Data();
 
-        Indexer indexer = new Indexer("/Users/xinliu/Documents/UNH/18Fall/cs853/index");
+        Indexer indexer = new Indexer(INDEX_DIR);
 
         //read answer
         data.tsv_reader(file);
-
+        titleWithQA = data.getTitleWithQA();
         ansList = data.getAnsList();
         queList = data.getQueList();
         docTitleList = data.getDocTitleList();
@@ -160,15 +148,56 @@ public class main {
         TFIDF_bnn_bnn tfidf_bnn_bnn = new TFIDF_bnn_bnn(queryList, 30);
         result_bnn_bnn = tfidf_bnn_bnn.getResults();
         tfidf_bnn_bnn.write();
-//
-//
-//        for (String page : queryList){
-//            System.out.println("Page=" + page);
-//            List<DocumentResult> bnn_list = result_bnn_bnn.get(page);
-//            List<DocumentResult> lnc_list = result_lnc_ltn.get(page);
-//            List<DocumentResult> anc_list = result_anc_apc.get(page);
-//        }
+
+        LanguageModel_BL lmbl = new LanguageModel_BL(queryList,30);
+        lmbl.getReulst();
+        lmbl.generateResults();
+
+       writeQrel(queryList,titleWithQA);
+
+
+
     }
+
+    public static void writeQrel(List<String> queryList,Map<String,List<PairPac.Pair>> titleWithQA){
+        List<String> qrelsOutput = new ArrayList<>();
+
+        // For every query which should be a tag
+        for (String query : queryList) {
+            // Make sure our tag is the same as represented in memory
+            String fixedQuery = query.replace(" ", "-");
+            // Get all postIds which are tagged with the given tag
+            List<PairPac.Pair> relevantPosts = titleWithQA.get(fixedQuery);
+
+            // If we have no posts that are relevant, continue to the next query
+            if (relevantPosts == null) {
+                continue;
+            }
+            // For every postId that is relevant
+            for (PairPac.Pair p : relevantPosts) {
+                // create a qrel-line indicating relevance of 1
+                String qrelStr = fixedQuery + " 0 " + Integer.toString(p.getId()) + " 1";
+                // add to final output
+                qrelsOutput.add(qrelStr);
+            }
+
+            writeToFile(qrelsOutput);
+        }
+    }
+
+    public static void writeToFile(List<String> runfileStrings) {
+        String fullpath ="./"+"tags.qrels";
+        try (FileWriter runfile = new FileWriter(new File(fullpath))) {
+            for (String line : runfileStrings) {
+                runfile.write(line + "\n");
+            }
+
+            runfile.close();
+        } catch (IOException e) {
+            System.out.println("Could not open " + fullpath);
+        }
+    }
+
 
 }
 
