@@ -61,9 +61,9 @@ Reporsitory
 3. run
 
    ```
-   mvn exec:java -Dexec.mainClass="main" -Dexec.args="wikiQA_directory"  
+   mvn exec:java -Dexec.mainClass="main" -Dexec.args="arg0"  
    ```
 
    The output files will be created under the repository folder.
 
-   Pass WikiQA.tsv's full directory to be argument 
+   arg0:Pass WikiQA.tsv's full directory to be argument 
